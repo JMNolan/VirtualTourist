@@ -9,35 +9,49 @@ import Foundation
 
 extension virtualTouristModel {
     
-    // MARK: getPhotosForLocation function
-    func getPhotosForLocation (latitude: Double, longitude: Double, completionHandler: @escaping (_ success: Bool, _ errorString: String?) -> Void ) {
-        let urlString = "\(virtualTouristModel.Constants.Methods.baseURL)\(virtualTouristModel.Constants.Methods.photosForLocation)&\(virtualTouristModel.Constants.FlickrParameterKeys.apiKey)=\(virtualTouristModel.Constants.FlickrParameterValues.apiKey)&\(virtualTouristModel.Constants.FlickrParameterKeys.latitude)=\(latitude)&\(virtualTouristModel.Constants.FlickrParameterKeys.longitude)=\(longitude)"
+    // MARK: pull photos for the location of the pin selected
+    func getPhotosForLocation (latitude: Double, longitude: Double, completionHandler: @escaping (_ success: Bool, _ errorString: String?, _ dataArray: [Data]) -> Void ) {
+        let urlString = "\(virtualTouristModel.Constants.Methods.photoSearchUrl)&lat=\(latitude)&lon=\(longitude)"
         let request = URLRequest(url: URL(string: urlString)!)
         let session = URLSession.shared
         let task = session.dataTask(with: request) { data, response, error in
             guard error == nil else {
-                completionHandler(false, "An error occured with the URL request")
+                completionHandler(false, "An error occured with the URL request", [])
                 return
             }
             
             guard let data = data else {
-                completionHandler(false, "Unable to locate data in request")
+                completionHandler(false, "Unable to locate data in request", [])
                 return
             }
             
             let statusCode = (response as? HTTPURLResponse)?.statusCode
             guard statusCode! <= 299 && statusCode! >= 200 else {
-                completionHandler(false, "Request failed. Status code \(statusCode!). Please try again later.")
+                completionHandler(false, "Request failed. Status code \(statusCode!). Please try again later.", [])
                 return
             }
             
             do {
-                // TODO: Parse data
+                let parsedResults = try JSONDecoder().decode(virtualTouristModel.Constants.PhotoResults.self, from: data)
+                var photoData: [Data] = []
+                for photo in parsedResults.photos.photo {
+                    let imageData = try? Data(contentsOf: self.pinPhotoToBinary(photo: photo))
+                    photoData.append(imageData!)
+                }
+                //TODO: return the data array to be used to create photo array
+                completionHandler(true, nil, photoData)
+                return
+                
             } catch {
-                completionHandler(false, "Data parse failed:\(error)")
+                completionHandler(false, "Data parse failed:\(error)", [])
                 return
             }
         }
         task.resume()
+    }
+    
+    //takes in a pinPhoto object and returns a url to be used as image data
+    func pinPhotoToBinary (photo: virtualTouristModel.Constants.pinPhoto) -> URL {
+        return URL(string: "https://farm\(photo.farm).staticflickr.com/\(photo.server)/\(photo.id)_\(photo.secret).jpg")!
     }
 }

@@ -30,27 +30,27 @@ extension virtualTouristModel {
         
         // MARK: Codable structs to be used in parsing json data
         struct PhotoResults: Codable {
-            static var photos: Photos!
+            var photos: Photos!
         }
         
         struct Photos: Codable {
-            static var page: String = ""
-            static var pages: String = ""
-            static var perpage: String = ""
-            static var total: String = ""
-            static var photo: [Photo]!
+            var page: String = ""
+            var pages: String = ""
+            var perpage: String = ""
+            var total: String = ""
+            var photo: [pinPhoto]!
         }
         
-        struct Photo: Codable {
-            static var id: String = ""
-            static var owner: String = ""
-            static var secret: String = ""
-            static var server: String = ""
-            static var farm: String = ""
-            static var title: String = ""
-            static var ispublic: String = ""
-            static var isfriend: String = ""
-            static var isfamily: String = ""
+        struct pinPhoto: Codable {
+            var id: String = ""
+            var owner: String = ""
+            var secret: String = ""
+            var server: String = ""
+            var farm: String = ""
+            var title: String = ""
+            var ispublic: String = ""
+            var isfriend: String = ""
+            var isfamily: String = ""
         }
         
         // TODO: Delete the response keys below if not needed due to using JSONDecoder
@@ -84,8 +84,7 @@ extension virtualTouristModel {
         
         //MARK: Methods
         struct Methods {
-            static let baseURL = "http://api.flickr.com/services/rest/"
-            static let photosForLocation = "flickr.photos.geo.photosForLocation"
+            static let photoSearchUrl = "http://api.flickr.com/services/rest/flickr.photos.search&api_key=\(virtualTouristModel.Constants.ApiKey)&format=json&nojsoncallback=1"
         }
     }
     
