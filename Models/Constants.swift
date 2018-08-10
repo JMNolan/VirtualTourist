@@ -29,28 +29,29 @@ extension virtualTouristModel {
         }
         
         // MARK: Codable structs to be used in parsing json data
-        struct PhotoResults: Codable {
-            var photos: Photos!
+        struct PhotoResults: Decodable {
+            var photos: Photos?
+            var stat: String?
         }
         
-        struct Photos: Codable {
-            var page: String = ""
-            var pages: String = ""
-            var perpage: String = ""
-            var total: String = ""
-            var photo: [pinPhoto]!
+        struct Photos: Decodable {
+            var page: Int?
+            var pages: Int?
+            var perpage: Int?
+            var total: String?
+            var photo: [pinPhoto]?
         }
         
-        struct pinPhoto: Codable {
-            var id: String = ""
-            var owner: String = ""
-            var secret: String = ""
-            var server: String = ""
-            var farm: String = ""
-            var title: String = ""
-            var ispublic: String = ""
-            var isfriend: String = ""
-            var isfamily: String = ""
+        struct pinPhoto: Decodable {
+            var id: String?
+            var owner: String?
+            var secret: String?
+            var server: String?
+            var farm: Int?
+            var title: String?
+            var ispublic: Int?
+            var isfriend: Int?
+            var isfamily: Int?
         }
         
         // TODO: Delete the response keys below if not needed due to using JSONDecoder
@@ -84,7 +85,7 @@ extension virtualTouristModel {
         
         //MARK: Methods
         struct Methods {
-            static let photoSearchUrl = "http://api.flickr.com/services/rest/flickr.photos.search&api_key=\(virtualTouristModel.Constants.ApiKey)&format=json&nojsoncallback=1"
+            static let photoSearchUrl = "https://api.flickr.com/services/rest/?method=flickr.photos.search&api_key=\(virtualTouristModel.Constants.ApiKey)&format=json&nojsoncallback=1"
         }
     }
     

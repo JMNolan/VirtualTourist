@@ -11,12 +11,12 @@ extension virtualTouristModel {
     
     // MARK: pull photos for the location of the pin selected
     func getPhotosForLocation (latitude: Double, longitude: Double, completionHandler: @escaping (_ success: Bool, _ errorString: String?, _ dataArray: [Data]) -> Void ) {
-        let urlString = "\(virtualTouristModel.Constants.Methods.photoSearchUrl)&lat=\(latitude)&lon=\(longitude)"
+        let urlString = "\(virtualTouristModel.Constants.Methods.photoSearchUrl)&lat=\(latitude)&lon=\(longitude)&per_page=50"
         let request = URLRequest(url: URL(string: urlString)!)
         let session = URLSession.shared
         let task = session.dataTask(with: request) { data, response, error in
             guard error == nil else {
-                completionHandler(false, "An error occured with the URL request", [])
+                completionHandler(false, "An error occured with the URL request: \(error!)", [])
                 return
             }
             
@@ -34,12 +34,13 @@ extension virtualTouristModel {
             do {
                 let parsedResults = try JSONDecoder().decode(virtualTouristModel.Constants.PhotoResults.self, from: data)
                 var photoData: [Data] = []
-                for photo in parsedResults.photos.photo {
-                    let imageData = try? Data(contentsOf: self.pinPhotoToBinary(photo: photo))
+                for photo in (parsedResults.photos?.photo!)! {
+                    let imageData = try? Data(contentsOf: self.pinPhotoToURL(photo: photo))
                     photoData.append(imageData!)
                 }
                 //TODO: return the data array to be used to create photo array
                 completionHandler(true, nil, photoData)
+                print("This many properties are being passed: \(photoData.count)")
                 return
                 
             } catch {
@@ -51,7 +52,7 @@ extension virtualTouristModel {
     }
     
     //takes in a pinPhoto object and returns a url to be used as image data
-    func pinPhotoToBinary (photo: virtualTouristModel.Constants.pinPhoto) -> URL {
-        return URL(string: "https://farm\(photo.farm).staticflickr.com/\(photo.server)/\(photo.id)_\(photo.secret).jpg")!
+    func pinPhotoToURL (photo: virtualTouristModel.Constants.pinPhoto) -> URL {
+        return URL(string: "https://farm\(photo.farm!).staticflickr.com/\(photo.server!)/\(photo.id!)_\(photo.secret!).jpg")!
     }
 }

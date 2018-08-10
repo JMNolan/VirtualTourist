@@ -20,56 +20,68 @@ class travelLocationsMapViewController: UIViewController, MKMapViewDelegate {
     var currentPin: Pin!
     var pinHasPhotos: Bool!
     
-    //MARK: Properties
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        mapView.delegate = self
         let fetchRequest: NSFetchRequest<Pin> = Pin.fetchRequest()
         if let result = try? dataController.viewContext.fetch(fetchRequest) {
             allPins = result
         }
         
-        //TODO: make app transition to next view controller when existing pin is tapped
-        
-        //TODO: Add allPins to the map for the user to see
+        //Add allPins to the map for the user to see
         for pin in allPins {
-            let annotation = MKPointAnnotation()
-            annotation.coordinate.latitude = pin.latitude
-            annotation.coordinate.longitude = pin.longitude
+            let annotation = PinAnnotation()
+            annotation.setCoordinate(newCoordinate: CLLocationCoordinate2D(latitude: pin.latitude, longitude: pin.longitude))
+            annotation.associatedPin = pin
             self.mapView.addAnnotation(annotation)
         }
     }
     
     //MARK: Functions
     @IBAction func dropPin(sender: UILongPressGestureRecognizer) {
-        let location = sender.location(in: self.mapView)
-        let coordinates = self.mapView.convert(location, toCoordinateFrom: self.mapView)
-        
-        //place pin on the map where user long presses
-        let annotation = MKPointAnnotation()
-        annotation.coordinate = coordinates
-        self.mapView.addAnnotation(annotation)
-        
-        //create Pin to be saved to persistent store
-        let pin = Pin(context: dataController.viewContext)
-        pin.latitude = coordinates.latitude
-        pin.longitude = coordinates.longitude
-        try? dataController.viewContext.save()
-        
-        //set the pin being dropped as the current pin
-        self.currentPin = pin
-        self.pinHasPhotos = false
-        
-        //Transition to photo album view controller
-        performSegue(withIdentifier: "showPhotoCollection", sender: self)
+        if sender.state == UIGestureRecognizerState.ended {
+            print("Dropping pin")
+            
+            let location = sender.location(in: self.mapView)
+            let coordinates = self.mapView.convert(location, toCoordinateFrom: self.mapView)
+            
+            //place pin on the map where user long presses
+            let annotation = PinAnnotation()
+            annotation.setCoordinate(newCoordinate: coordinates)
+            self.mapView.addAnnotation(annotation)
+            
+            //create Pin to be saved to persistent store
+            let pin = Pin(context: dataController.viewContext)
+            pin.latitude = coordinates.latitude
+            pin.longitude = coordinates.longitude
+            try? dataController.viewContext.save()
+            
+            //set the pin being dropped as the current pin
+            self.currentPin = pin
+            annotation.associatedPin = pin
+            self.pinHasPhotos = false
+            
+            //Transition to photo album view controller
+            let photoAlbumVC = self.storyboard?.instantiateViewController(withIdentifier: "photoAlbumVC") as! photoAlbumViewController
+            photoAlbumVC.dataController = self.dataController
+            photoAlbumVC.currentPin = self.currentPin
+            photoAlbumVC.photosExist = self.pinHasPhotos
+            navigationController?.pushViewController(photoAlbumVC, animated: true)
+        }
     }
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        if let vc = segue.destination as? photoAlbumViewController {
-            vc.dataController = dataController
-            vc.currentPin = self.currentPin
-            vc.photosExist = self.pinHasPhotos
-        }
+    //executes when user taps existing annotation on the map
+    func mapView(_ mapView: MKMapView, didSelect: MKAnnotationView) {
+        print("standard delegate method")
+        //pass necessary variables and transition to next view controller
+        let photoAlbumVC = self.storyboard?.instantiateViewController(withIdentifier: "photoAlbumVC") as! photoAlbumViewController
+        let annotation = didSelect.annotation as! PinAnnotation
+        photoAlbumVC.dataController = self.dataController
+        photoAlbumVC.photosExist = true
+        photoAlbumVC.currentPin = annotation.associatedPin
+        print("I pressed a pin")
+        navigationController?.pushViewController(photoAlbumVC, animated: true)
     }
 }
 
