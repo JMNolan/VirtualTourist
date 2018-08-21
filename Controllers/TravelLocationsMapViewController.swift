@@ -24,6 +24,19 @@ class travelLocationsMapViewController: UIViewController, MKMapViewDelegate {
         super.viewDidLoad()
         
         mapView.delegate = self
+        
+        //load the mapView zoom level and center point from last time user was in the view
+        let defaults = UserDefaults.standard
+        if let lat = defaults.value(forKey: "lat"),
+            let lon = defaults.value(forKey: "lon"),
+            let latDelta = defaults.value(forKey: "latDelta"),
+            let lonDelta = defaults.value(forKey: "lonDelta") {
+            
+            let center: CLLocationCoordinate2D = CLLocationCoordinate2D(latitude: lat as! Double, longitude: lon as! Double)
+            let span: MKCoordinateSpan = MKCoordinateSpan(latitudeDelta: latDelta as! Double, longitudeDelta: lonDelta as! Double)
+            let region: MKCoordinateRegion = MKCoordinateRegion(center: center, span: span)
+            mapView.setRegion(region, animated: true)
+        }
         let fetchRequest: NSFetchRequest<Pin> = Pin.fetchRequest()
         if let result = try? dataController.viewContext.fetch(fetchRequest) {
             allPins = result
@@ -36,6 +49,17 @@ class travelLocationsMapViewController: UIViewController, MKMapViewDelegate {
             annotation.associatedPin = pin
             self.mapView.addAnnotation(annotation)
         }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        //save mapView zoom level and center point as user exits view
+        let defaults = UserDefaults.standard
+        defaults.set(self.mapView.centerCoordinate.latitude, forKey: "lat")
+        defaults.set(self.mapView.centerCoordinate.longitude, forKey: "lon")
+        defaults.set(self.mapView.region.span.latitudeDelta, forKey: "latDelta")
+        defaults.set(self.mapView.region.span.longitudeDelta, forKey: "lonDelta")
     }
     
     //MARK: Functions

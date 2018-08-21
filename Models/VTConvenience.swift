@@ -34,9 +34,11 @@ extension virtualTouristModel {
             do {
                 let parsedResults = try JSONDecoder().decode(virtualTouristModel.Constants.PhotoResults.self, from: data)
                 var photoData: [Data] = []
+                var photoId: [String] = []
                 for photo in (parsedResults.photos?.photo!)! {
                     let imageData = try? Data(contentsOf: self.pinPhotoToURL(photo: photo))
                     photoData.append(imageData!)
+                    photoId.append(photo.id!)
                 }
                 //TODO: return the data array to be used to create photo array
                 completionHandler(true, nil, photoData)

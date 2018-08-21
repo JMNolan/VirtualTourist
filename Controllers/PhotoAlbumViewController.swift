@@ -11,40 +11,35 @@ import UIKit
 import MapKit
 import CoreData
 
-class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
+class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout, NSFetchedResultsControllerDelegate {
     //MARK: Outlets
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var imageCollectionView: UICollectionView!
     @IBOutlet weak var newCollectionButton: UIBarButtonItem!
     
     var dataController: DataController!
-    var photos: [Photo] = []
+    var fetchedResultsController: NSFetchedResultsController<Photo>!
+    var blockOperations: [BlockOperation] = []
     var currentPin: Pin!
     var photosExist: Bool!
     let itemSpacing: CGFloat = 9.0
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        // TODO: populate collection view with photos that belong to selected pin
         
         imageCollectionView.dataSource = self
-        
-        //create fetch request to pull photos attached to current pin
-        let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
-        let predicate = NSPredicate(format: "pin == %@", currentPin)
-        fetchRequest.predicate = predicate
+        reloadImages()
         
         //check if photos already exist in the pin or if it is new
-        if photosExist {
-            //execute fetch request to gather photos for selected pin and put them in the photos array
-            if let results = try? dataController.viewContext.fetch(fetchRequest) {
-                photos = results
-                print(photos.count)
-                self.imageCollectionView.reloadData()
-            }
-        } else {
+        if !photosExist {
             pullNewPhotos()
         }
+    }
+    
+    //get rid of fetched results controller instance when user leaves view
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        fetchedResultsController = nil
     }
     
     //pull photos from flickr using the coords from currentPin
@@ -55,7 +50,6 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
                     let photo = Photo(context: self.dataController.viewContext)
                     photo.imageData = property
                     self.currentPin.addToPhotos(photo)
-                    self.photos.append(photo)
                 }
                 try? self.dataController.viewContext.save()
                 OperationQueue.main.addOperation({
@@ -72,33 +66,41 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         }
     }
     
+    fileprivate func reloadImages() {
+        let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
+        let predicate = NSPredicate(format: "pin == %@", currentPin)
+        fetchRequest.predicate = predicate
+        fetchRequest.sortDescriptors = [NSSortDescriptor(key: "id", ascending: true)]
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
+        fetchedResultsController.delegate = self
+        do {
+            try fetchedResultsController.performFetch()
+        } catch {
+            fatalError("The fetch could not be performed: \(error.localizedDescription)")
+        }
+    }
+    
     //refreshes images for a specific location by performing the pull again from flickr
     @IBAction func pullNewPhotoCollection(_ sender: Any) {
-        //TODO: delete photos from local array, from persistent store, and
-        self.photos = []
-        for photo in photos {
+        for photo in fetchedResultsController.fetchedObjects! {
             dataController.viewContext.delete(photo)
         }
-        //pullNewPhotos()
-        try? dataController.viewContext.save()
-        //self.imageCollectionView.reloadData()
-        
+        pullNewPhotos()
     }
     
-    //function called when user taps an image in the collection view
-    func deleteImage(at indexPath: IndexPath) {
-        //TODO: delete image from array, delete image from persistent store, and reload data in collection view
-    }
-    
-    //DataSourceMethods for collection view
+    // MARK: CollectionView DataSource
     func collectionView (_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return photos.count
+        if let count = fetchedResultsController.sections?[0].numberOfObjects {
+            return count
+        }else {
+            return 0
+        }
     }
     
     func collectionView (_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         print("Setting cell with photo")
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath) as! CollectionViewCell
-        let photoForCell = photos[(indexPath as NSIndexPath).row]
+        let photoForCell = fetchedResultsController.object(at: indexPath)
         
         cell.cellImage.image = UIImage(data: photoForCell.imageData!)
         print(photoForCell.imageData!)
@@ -107,16 +109,13 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     }
     
     func collectionView (_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        //TODO: Write code to delete photo from peristent store
-        self.photos.remove(at: indexPath.item)
-        let photoToDelete = photos[indexPath.item]
+        let photoToDelete = fetchedResultsController.object(at: indexPath)
         dataController.viewContext.delete(photoToDelete)
         do{
             try dataController.viewContext.save()
         } catch {
             print("failed to save view context to persistent store")
         }
-        collectionView.deleteItems(at: [indexPath])
     }
     
     //Set size of cells relative to the view size
@@ -128,4 +127,36 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     }
     
     
+}
+
+extension photoAlbumViewController {
+    
+    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        blockOperations.removeAll(keepingCapacity: false)
+    }
+
+    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
+        imageCollectionView.performBatchUpdates({
+            for operation in self.blockOperations {
+                operation.start()
+            }
+            }, completion: {(completed) in
+                
+        })
+    }
+    
+    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
+        switch type {
+        case .insert:
+            blockOperations.append(BlockOperation(block: {
+                self.imageCollectionView.insertItems(at: [newIndexPath!])
+            }))
+        case .delete:
+            blockOperations.append(BlockOperation(block: {
+                self.imageCollectionView.deleteItems(at: [indexPath!])
+            }))
+        default:
+            break
+        }
+    }
 }
