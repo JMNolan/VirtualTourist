@@ -16,6 +16,7 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var imageCollectionView: UICollectionView!
     @IBOutlet weak var newCollectionButton: UIBarButtonItem!
+    @IBOutlet weak var noImagesLabel: UITextField!
     
     var dataController: DataController!
     var fetchedResultsController: NSFetchedResultsController<Photo>!
@@ -23,10 +24,27 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     var currentPin: Pin!
     var photosExist: Bool!
     let itemSpacing: CGFloat = 9.0
+    var placeHolderCount: Int!
+    var placeHoldersNeeded: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        //set the region of the map
+        let latDelta: Double = 1.0
+        let lonDelta: Double = 1.0
+        let span = MKCoordinateSpanMake(latDelta, lonDelta)
+        let centerCoordinate = CLLocationCoordinate2D(latitude: currentPin.latitude, longitude: currentPin.longitude)
+        let region = MKCoordinateRegionMake(centerCoordinate, span)
+        mapView.setRegion(region, animated: true)
+        
+        //add the current pin to the mapView
+        let pin = PinAnnotation()
+        pin.setCoordinate(newCoordinate: centerCoordinate)
+        mapView.addAnnotation(pin)
+        
+        
+        self.noImagesLabel.isHidden = true
         imageCollectionView.dataSource = self
         reloadImages()
         
@@ -46,15 +64,20 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     fileprivate func pullNewPhotos() {
         virtualTouristModel.sharedInstance().getPhotosForLocation(latitude: currentPin.latitude, longitude: currentPin.longitude) {(success, error, data) in
             if success {
+                self.newCollectionButton.isEnabled = false
+                self.placeHolderCount = data.count
+                OperationQueue.main.addOperation({
+                    self.imageCollectionView.reloadData()
+                })
+
                 for property in data {
                     let photo = Photo(context: self.dataController.viewContext)
                     photo.imageData = property
                     self.currentPin.addToPhotos(photo)
                 }
+                self.placeHolderCount = nil
+                self.newCollectionButton.isEnabled = true
                 try? self.dataController.viewContext.save()
-                OperationQueue.main.addOperation({
-                    self.imageCollectionView.reloadData()
-                })
             }
             
             if error != nil {
@@ -90,9 +113,14 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     // MARK: CollectionView DataSource
     func collectionView (_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+//        if self.placeHolderCount != nil {
+//            return placeHolderCount
+//        }
+        
         if let count = fetchedResultsController.sections?[0].numberOfObjects {
             return count
         }else {
+            self.noImagesLabel.isHidden = false
             return 0
         }
     }
@@ -102,9 +130,12 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath) as! CollectionViewCell
         let photoForCell = fetchedResultsController.object(at: indexPath)
         
-        cell.cellImage.image = UIImage(data: photoForCell.imageData!)
-        print(photoForCell.imageData!)
+//        if self.placeHolderCount != nil {
+//            cell.cellImage.image = #imageLiteral(resourceName: "VirtualTourist_512")
+//            return cell
+//        }
         
+        cell.cellImage.image = UIImage(data: photoForCell.imageData!)
         return cell
     }
     

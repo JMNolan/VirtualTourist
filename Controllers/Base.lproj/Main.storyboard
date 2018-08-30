@@ -94,7 +94,7 @@
                                             <rect key="frame" x="0.0" y="0.0" width="50" height="50"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="AgC-IR-lQp">
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="VirtualTourist_180" translatesAutoresizingMaskIntoConstraints="NO" id="AgC-IR-lQp">
                                                     <rect key="frame" x="0.0" y="0.0" width="50" height="50"/>
                                                 </imageView>
                                             </subviews>
@@ -133,6 +133,13 @@
                                     <constraint firstAttribute="height" constant="165" id="13X-Er-BZK"/>
                                 </constraints>
                             </mapView>
+                            <textField opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="No Images" borderStyle="roundedRect" textAlignment="center" adjustsFontForContentSizeCategory="YES" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="F5s-iq-xTJ">
+                                <rect key="frame" x="77" y="378" width="220" height="43"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <nil key="textColor"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="32"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
@@ -155,6 +162,7 @@
                         <outlet property="imageCollectionView" destination="JvP-GY-XcE" id="yxU-dl-ekL"/>
                         <outlet property="mapView" destination="ZBC-mw-XRE" id="Ys8-Q7-Ikh"/>
                         <outlet property="newCollectionButton" destination="b8S-QQ-DT8" id="he0-xa-vZB"/>
+                        <outlet property="noImagesLabel" destination="F5s-iq-xTJ" id="5g4-cq-lym"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="PrU-4G-m7b" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -162,4 +170,7 @@
             <point key="canvasLocation" x="1060" y="31.934032983508249"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="VirtualTourist_180" width="180" height="180"/>
+    </resources>
 </document>
