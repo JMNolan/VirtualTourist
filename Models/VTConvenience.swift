@@ -10,43 +10,41 @@ import Foundation
 extension virtualTouristModel {
     
     // MARK: pull photos for the location of the pin selected
-    func getPhotosForLocation (latitude: Double, longitude: Double, completionHandler: @escaping (_ success: Bool, _ errorString: String?, _ dataArray: [Data]) -> Void ) {
-        let urlString = "\(virtualTouristModel.Constants.Methods.photoSearchUrl)&lat=\(latitude)&lon=\(longitude)&per_page=50"
+    func getPhotosForLocation (latitude: Double, longitude: Double, completionHandler: @escaping (_ success: Bool, _ errorString: String?, _ dataArray: [URL], _ imageCount: Int, _ totalPages: Int, _ currentPage: Int) -> Void ) {
+        let urlString = "\(virtualTouristModel.Constants.Methods.photoSearchUrl)&lat=\(latitude)&lon=\(longitude)"
         let request = URLRequest(url: URL(string: urlString)!)
         let session = URLSession.shared
         let task = session.dataTask(with: request) { data, response, error in
             guard error == nil else {
-                completionHandler(false, "An error occured with the URL request: \(error!)", [])
+                completionHandler(false, "An error occured with the URL request: \(error!)", [], 0, 0, 0)
                 return
             }
             
             guard let data = data else {
-                completionHandler(false, "Unable to locate data in request", [])
+                completionHandler(false, "Unable to locate data in request", [], 0, 0, 0)
                 return
             }
             
             let statusCode = (response as? HTTPURLResponse)?.statusCode
             guard statusCode! <= 299 && statusCode! >= 200 else {
-                completionHandler(false, "Request failed. Status code \(statusCode!). Please try again later.", [])
+                completionHandler(false, "Request failed. Status code \(statusCode!). Please try again later.", [], 0, 0, 0)
                 return
             }
             
             do {
                 let parsedResults = try JSONDecoder().decode(virtualTouristModel.Constants.PhotoResults.self, from: data)
-                var photoData: [Data] = []
+                var photoURL: [URL] = []
                 var photoId: [String] = []
                 for photo in (parsedResults.photos?.photo!)! {
-                    let imageData = try? Data(contentsOf: self.pinPhotoToURL(photo: photo))
-                    photoData.append(imageData!)
+                    let imageURL = self.pinPhotoToURL(photo: photo)
+                    photoURL.append(imageURL)
                     photoId.append(photo.id!)
                 }
-                //TODO: return the data array to be used to create photo array
-                completionHandler(true, nil, photoData)
-                print("This many properties are being passed: \(photoData.count)")
+                completionHandler(true, nil, photoURL, Int((parsedResults.photos?.total)!)!, (parsedResults.photos?.pages)!, (parsedResults.photos?.page)!)
+                print("This many properties are being passed: \(Int((parsedResults.photos?.total)!)!)")
                 return
-                
             } catch {
-                completionHandler(false, "Data parse failed:\(error)", [])
+                completionHandler(false, "Data parse failed:\(error)", [], 0, 0, 0)
                 return
             }
         }

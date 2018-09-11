@@ -65,7 +65,6 @@ class travelLocationsMapViewController: UIViewController, MKMapViewDelegate {
     //MARK: Functions
     @IBAction func dropPin(sender: UILongPressGestureRecognizer) {
         if sender.state == UIGestureRecognizerState.ended {
-            print("Dropping pin")
             
             let location = sender.location(in: self.mapView)
             let coordinates = self.mapView.convert(location, toCoordinateFrom: self.mapView)
@@ -90,7 +89,7 @@ class travelLocationsMapViewController: UIViewController, MKMapViewDelegate {
             let photoAlbumVC = self.storyboard?.instantiateViewController(withIdentifier: "photoAlbumVC") as! photoAlbumViewController
             photoAlbumVC.dataController = self.dataController
             photoAlbumVC.currentPin = self.currentPin
-            photoAlbumVC.photosExist = self.pinHasPhotos
+            photoAlbumVC.photosExist = false
             navigationController?.pushViewController(photoAlbumVC, animated: true)
         }
     }

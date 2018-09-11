@@ -94,18 +94,26 @@
                                             <rect key="frame" x="0.0" y="0.0" width="50" height="50"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
-                                                <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="VirtualTourist_180" translatesAutoresizingMaskIntoConstraints="NO" id="AgC-IR-lQp">
+                                                <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="AgC-IR-lQp">
                                                     <rect key="frame" x="0.0" y="0.0" width="50" height="50"/>
                                                 </imageView>
+                                                <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="gray" translatesAutoresizingMaskIntoConstraints="NO" id="gbe-Qp-T4S">
+                                                    <rect key="frame" x="15" y="15" width="20" height="20"/>
+                                                </activityIndicatorView>
                                             </subviews>
                                         </view>
                                         <constraints>
                                             <constraint firstItem="AgC-IR-lQp" firstAttribute="width" secondItem="xPv-Zh-65O" secondAttribute="width" id="1fe-8V-Yti"/>
                                             <constraint firstItem="AgC-IR-lQp" firstAttribute="centerY" secondItem="xPv-Zh-65O" secondAttribute="centerY" id="EOS-gE-nob"/>
+                                            <constraint firstItem="gbe-Qp-T4S" firstAttribute="height" secondItem="xPv-Zh-65O" secondAttribute="height" constant="-30" id="JgN-Qy-6I0"/>
                                             <constraint firstItem="AgC-IR-lQp" firstAttribute="centerX" secondItem="xPv-Zh-65O" secondAttribute="centerX" id="Mq2-j6-wey"/>
+                                            <constraint firstItem="gbe-Qp-T4S" firstAttribute="centerX" secondItem="xPv-Zh-65O" secondAttribute="centerX" id="WvH-GK-s6P"/>
+                                            <constraint firstItem="gbe-Qp-T4S" firstAttribute="centerY" secondItem="xPv-Zh-65O" secondAttribute="centerY" id="oUl-pa-oPP"/>
                                             <constraint firstItem="AgC-IR-lQp" firstAttribute="height" secondItem="xPv-Zh-65O" secondAttribute="height" id="pM5-fg-BXr"/>
+                                            <constraint firstItem="gbe-Qp-T4S" firstAttribute="width" secondItem="xPv-Zh-65O" secondAttribute="width" constant="-30" id="y1e-9S-mXJ"/>
                                         </constraints>
                                         <connections>
+                                            <outlet property="activityIndicator" destination="gbe-Qp-T4S" id="hng-Nt-Ui7"/>
                                             <outlet property="cellImage" destination="AgC-IR-lQp" id="LGM-Yz-Bxj"/>
                                         </connections>
                                     </collectionViewCell>
@@ -170,7 +178,4 @@
             <point key="canvasLocation" x="1060" y="31.934032983508249"/>
         </scene>
     </scenes>
-    <resources>
-        <image name="VirtualTourist_180" width="180" height="180"/>
-    </resources>
 </document>
