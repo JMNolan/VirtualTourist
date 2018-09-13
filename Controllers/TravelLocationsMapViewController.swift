@@ -24,6 +24,9 @@ class travelLocationsMapViewController: UIViewController, MKMapViewDelegate {
         super.viewDidLoad()
         
         mapView.delegate = self
+        let scale = MKScaleView(mapView: mapView)
+        scale.scaleVisibility = .visible
+        mapView.addSubview(scale)
         
         //load the mapView zoom level and center point from last time user was in the view
         let defaults = UserDefaults.standard

@@ -38,18 +38,24 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         let region = MKCoordinateRegionMake(centerCoordinate, span)
         mapView.setRegion(region, animated: true)
         
+        let scale = MKScaleView(mapView: mapView)
+        scale.scaleVisibility = .visible
+        mapView.addSubview(scale)
+        
         //add the current pin to the mapView
         let pin = PinAnnotation()
         pin.setCoordinate(newCoordinate: centerCoordinate)
         mapView.addAnnotation(pin)
         
-        
-        self.noImagesLabel.isHidden = true
+        DispatchQueue.main.async {
+            self.noImagesLabel.isHidden = true
+        }
         imageCollectionView.dataSource = self
         
         //check if photos already exist in the pin or if it is new
         if !photosExist {
             pullNewPhotos()
+            try? dataController.viewContext.save()
         } else {
             reloadImages()
         }
@@ -66,7 +72,9 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     fileprivate func pullNewPhotos() {
         virtualTouristModel.sharedInstance().getPhotosForLocation(latitude: currentPin.latitude, longitude: currentPin.longitude) {(success, error, data, imageCount, totalPages, currentPage)  in
             if success {
-                self.newCollectionButton.isEnabled = false
+                DispatchQueue.main.async {
+                    self.newCollectionButton.isEnabled = false
+                }
                 self.photoCount = imageCount
                 for url in data {
                     let photo = Photo(context: self.dataController.viewContext)
@@ -143,7 +151,9 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
             print("\(count)")
             return count
         } else {
-            self.noImagesLabel.isHidden = false
+            DispatchQueue.main.async {
+                self.noImagesLabel.isHidden = false
+            }
             print("zero")
             return 0
         }
