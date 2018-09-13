@@ -25,6 +25,7 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     var photosExist: Bool!
     let itemSpacing: CGFloat = 9.0
     var photoCount: Int!
+    var placeHoldersNeeded: Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -45,15 +46,12 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         
         self.noImagesLabel.isHidden = true
         imageCollectionView.dataSource = self
-        imageCollectionView.delegate = self
-        reloadImages()
         
         //check if photos already exist in the pin or if it is new
         if !photosExist {
             pullNewPhotos()
-        }
-        OperationQueue.main.addOperation {
-            self.imageCollectionView.reloadData()
+        } else {
+            reloadImages()
         }
     }
     
@@ -66,21 +64,19 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     //pull photos from flickr using the coords from currentPin
     fileprivate func pullNewPhotos() {
-        virtualTouristModel.sharedInstance().getPhotosForLocation(latitude: currentPin.latitude, longitude: currentPin.longitude) {(success, error, URLs, photoCount, pageCount, currentPage) in
+        virtualTouristModel.sharedInstance().getPhotosForLocation(latitude: currentPin.latitude, longitude: currentPin.longitude) {(success, error, data, imageCount, totalPages, currentPage)  in
             if success {
                 self.newCollectionButton.isEnabled = false
-                OperationQueue.main.addOperation({
-                    self.imageCollectionView.reloadData()
-                })
-
-                for url in URLs {
+                self.photoCount = imageCount
+                for url in data {
                     let photo = Photo(context: self.dataController.viewContext)
                     photo.imageURL = url
                     self.currentPin.addToPhotos(photo)
                 }
-                OperationQueue.main.addOperation {
-                    try? self.dataController.viewContext.save()
-                    self.imageCollectionView.reloadData()
+                do {
+                    try self.dataController.viewContext.save()
+                } catch {
+                    print("pull photo save failed")
                 }
             }
             
@@ -93,25 +89,8 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         }
     }
     
-    func downloadImage(using cell: CollectionViewCell, photo: Photo, collectionView: UICollectionView, index: IndexPath) {
-        if let imageData = photo.imageData {
-            cell.activityIndicator.stopAnimating()
-            cell.cellImage.image = UIImage(data: imageData)
-        } else {
-            if let imageUrl = photo.imageURL {
-                cell.activityIndicator.startAnimating()
-                let data = try? Data(contentsOf: imageUrl)
-                        if let currentCell = collectionView.cellForItem(at: index) as? CollectionViewCell {
-                            currentCell.cellImage.image = UIImage(data: data!)
-                            cell.activityIndicator.stopAnimating()
-                        }
-                photo.imageData = data!
-                        try? self.dataController.viewContext.save()
-            }
-        }
-    }
-    
-    func reloadImages() {
+    //load images that have been previously downloaded
+    fileprivate func reloadImages() {
         let fetchRequest: NSFetchRequest<Photo> = Photo.fetchRequest()
         let predicate = NSPredicate(format: "pin == %@", currentPin)
         fetchRequest.predicate = predicate
@@ -120,7 +99,7 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         fetchedResultsController.delegate = self
         do {
             try fetchedResultsController.performFetch()
-            self.imageCollectionView.reloadData()
+            self.photoCount = fetchedResultsController.fetchedObjects?.count
         } catch {
             fatalError("The fetch could not be performed: \(error.localizedDescription)")
         }
@@ -134,35 +113,60 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         pullNewPhotos()
     }
     
+    //function for loading images that are stored or that are being downloaded
+    private func downloadImage(using cell: CollectionViewCell, photo: Photo, collectionView: UICollectionView, index: IndexPath) {
+            if let imageData = photo.imageData {
+                cell.activityIndicator.stopAnimating()
+                cell.cellImage.image = UIImage(data: Data(referencing: imageData as NSData))
+            } else {
+                if let imageUrl = photo.imageURL {
+                    cell.activityIndicator.startAnimating()
+                    do {
+                        let imageData = try Data(contentsOf: imageUrl)
+                        let image = UIImage(data: imageData)
+                        cell.cellImage.image = image
+                        photo.imageData = imageData
+                        cell.activityIndicator.stopAnimating()
+                    } catch{
+                        print("failed to download image from URL")
+                    }
+                    OperationQueue.main.addOperation {
+                        try? self.dataController.viewContext.save()
+                    }
+                }
+            }
+        }
+    
     // MARK: CollectionView DataSource
     func collectionView (_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if let count = self.photoCount {
+            print("\(count)")
             return count
-        }else {
+        } else {
             self.noImagesLabel.isHidden = false
+            print("zero")
             return 0
         }
     }
     
-    func collectionView (_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let photoToDelete = self.fetchedResultsController.object(at: indexPath)
-        dataController.viewContext.delete(photoToDelete)
-        do{
-            try dataController.viewContext.save()
-        } catch {
-            print("failed to save view context to persistent store")
-        }
+    func collectionView (_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let celldentifier = "photoCell"
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: celldentifier, for: indexPath) as! CollectionViewCell
+            cell.cellImage.image = nil
+            cell.activityIndicator.startAnimating()
+        
+            let photo = fetchedResultsController.object(at: indexPath)
+            downloadImage(using: cell, photo: photo, collectionView: collectionView, index: indexPath)
+            return cell
     }
     
-    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let celldentifier = "photoCell"
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: celldentifier, for: indexPath) as! CollectionViewCell
-        cell.cellImage.image = nil
-        cell.activityIndicator.startAnimating()
-        
-        let photo = fetchedResultsController.object(at: indexPath)
-        downloadImage(using: cell, photo: photo, collectionView: collectionView, index: indexPath)
-        return cell
+    func collectionView (_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let photoToDelete = fetchedResultsController.object(at: indexPath)
+        dataController.viewContext.delete(photoToDelete)
+        self.photoCount = self.photoCount - 1
+        OperationQueue.main.addOperation {
+            try? self.dataController.viewContext.save()
+        }
     }
     
     //Set size of cells relative to the view size
@@ -205,7 +209,20 @@ extension photoAlbumViewController {
         }
     }
 }
+//USED
+//func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+//    let celldentifier = "PhotoCell"
+//    let cell = collectionView.dequeueReusableCell(withReuseIdentifier: celldentifier, for: indexPath) as! PhotoCell
+//    cell.imageView.image = nil
+//    cell.activityIndicator.startAnimating()
 //
+//    let photo = fetchedResultsController.object(at: indexPath)
+//    downloadImage(using: cell, photo: photo, collectionView: collectionView, index: indexPath)
+//    return cell
+//}
+//
+
+
 //private func downloadImage(using cell: PhotoCell, photo: Photo, collectionView: UICollectionView, index: IndexPath) {
 //    if let imageData = photo.image {
 //        cell.activityIndicator.stopAnimating()
@@ -229,17 +246,3 @@ extension photoAlbumViewController {
 //        }
 //    }
 //}
-
-//    func collectionView (_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-//        print("Setting cell with photo")
-//        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath) as! CollectionViewCell
-//        let photoForCell = fetchedResultsController.object(at: indexPath)
-
-//        if self.placeHolderCount != nil {
-//            cell.cellImage.image = #imageLiteral(resourceName: "VirtualTourist_512")
-//            return cell
-//        }
-//
-//        cell.cellImage.image = UIImage(data: photoForCell.imageData!)
-//        return cell
-//    }

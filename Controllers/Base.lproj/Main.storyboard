@@ -141,9 +141,8 @@
                                     <constraint firstAttribute="height" constant="165" id="13X-Er-BZK"/>
                                 </constraints>
                             </mapView>
-                            <textField opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="No Images" borderStyle="roundedRect" textAlignment="center" adjustsFontForContentSizeCategory="YES" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="F5s-iq-xTJ">
-                                <rect key="frame" x="77" y="378" width="220" height="43"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="No Images" borderStyle="roundedRect" textAlignment="center" adjustsFontForContentSizeCategory="YES" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="F5s-iq-xTJ">
+                                <rect key="frame" x="102.5" y="378" width="169" height="43"/>
                                 <nil key="textColor"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="32"/>
                                 <textInputTraits key="textInputTraits"/>
@@ -154,7 +153,9 @@
                             <constraint firstItem="ZBC-mw-XRE" firstAttribute="top" secondItem="7Iu-8i-40J" secondAttribute="top" constant="-20" id="3qG-pp-wjd"/>
                             <constraint firstItem="ZBC-mw-XRE" firstAttribute="leading" secondItem="7Iu-8i-40J" secondAttribute="leading" id="Bhq-Ig-d5L"/>
                             <constraint firstItem="oXl-b0-c3s" firstAttribute="leading" secondItem="7Iu-8i-40J" secondAttribute="leading" id="Gvh-Xu-Djp"/>
+                            <constraint firstItem="F5s-iq-xTJ" firstAttribute="centerY" secondItem="JvP-GY-XcE" secondAttribute="centerY" constant="5.5" id="QGd-Td-0P7"/>
                             <constraint firstItem="JvP-GY-XcE" firstAttribute="top" secondItem="ZBC-mw-XRE" secondAttribute="bottom" id="Qw1-OS-zfM"/>
+                            <constraint firstItem="F5s-iq-xTJ" firstAttribute="centerX" secondItem="JvP-GY-XcE" secondAttribute="centerX" id="RgE-g9-bhS"/>
                             <constraint firstItem="oXl-b0-c3s" firstAttribute="top" secondItem="JvP-GY-XcE" secondAttribute="bottom" id="buH-bL-Fd5"/>
                             <constraint firstAttribute="trailing" secondItem="JvP-GY-XcE" secondAttribute="trailing" id="ee2-7u-lq4"/>
                             <constraint firstItem="JvP-GY-XcE" firstAttribute="leading" secondItem="7Iu-8i-40J" secondAttribute="leading" id="hf9-S4-Uja"/>
