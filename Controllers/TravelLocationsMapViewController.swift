@@ -20,6 +20,7 @@ class travelLocationsMapViewController: UIViewController, MKMapViewDelegate {
     var currentPin: Pin!
     var pinHasPhotos: Bool!
     
+    //MARK: Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -99,14 +100,12 @@ class travelLocationsMapViewController: UIViewController, MKMapViewDelegate {
     
     //executes when user taps existing annotation on the map
     func mapView(_ mapView: MKMapView, didSelect: MKAnnotationView) {
-        print("standard delegate method")
         //pass necessary variables and transition to next view controller
         let photoAlbumVC = self.storyboard?.instantiateViewController(withIdentifier: "photoAlbumVC") as! photoAlbumViewController
         let annotation = didSelect.annotation as! PinAnnotation
         photoAlbumVC.dataController = self.dataController
         photoAlbumVC.photosExist = true
         photoAlbumVC.currentPin = annotation.associatedPin
-        print("I pressed a pin")
         navigationController?.pushViewController(photoAlbumVC, animated: true)
     }
 }

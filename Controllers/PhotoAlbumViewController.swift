@@ -18,15 +18,17 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     @IBOutlet weak var newCollectionButton: UIBarButtonItem!
     @IBOutlet weak var noImagesLabel: UILabel!
     
+    //MARK: Properties
     var dataController: DataController!
     var blockOperations: [BlockOperation] = []
     var currentPin: Pin!
     var photosForPin: [Photo] = []
     var photosExist: Bool!
     let itemSpacing: CGFloat = 9.0
-    var photoCount: Int!
+    var photoCount: Int = 0
     var placeHoldersNeeded: Bool = false
     
+    //MARK: Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -36,24 +38,23 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         let span = MKCoordinateSpanMake(latDelta, lonDelta)
         let centerCoordinate = CLLocationCoordinate2D(latitude: currentPin.latitude, longitude: currentPin.longitude)
         let region = MKCoordinateRegionMake(centerCoordinate, span)
-        mapView.setRegion(region, animated: true)
-        
-        let scale = MKScaleView(mapView: mapView)
-        scale.scaleVisibility = .visible
-        mapView.addSubview(scale)
+        DispatchQueue.main.async {
+            self.mapView.setRegion(region, animated: true)
+        }
         
         //add the current pin to the mapView
         let pin = PinAnnotation()
         pin.setCoordinate(newCoordinate: centerCoordinate)
-        mapView.addAnnotation(pin)
-        
-        imageCollectionView.dataSource = self
-        reloadImages()
+        DispatchQueue.main.async {
+            self.mapView.addAnnotation(pin)
+        }
         
         //check if photos already exist in the pin or if it is new
         if !photosExist {
             pullNewPhotos()
             try? dataController.viewContext.save()
+        } else {
+            reloadImages()
         }
     }
     
@@ -61,22 +62,27 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     fileprivate func pullNewPhotos() {
         virtualTouristModel.sharedInstance().getPhotosForLocation(latitude: currentPin.latitude, longitude: currentPin.longitude) {(success, error, data, imageCount, totalPages, currentPage)  in
             if success {
-                self.newCollectionButton.isEnabled = false
-                self.photoCount = imageCount
-                if self.photoCount != 0 {
-                    self.noImagesLabel.isHidden = true
-                } else {
-                    self.noImagesLabel.isEnabled = false
+                DispatchQueue.main.async {
+                    self.newCollectionButton.isEnabled = false
+                    self.photoCount = imageCount
+                    if self.photoCount != 0 {
+                        self.noImagesLabel.isHidden = true
+                    } else {
+                        self.noImagesLabel.isHidden = false
+                    }
                 }
+                
+                //Create a photo entity for each data item pulled from Flickr and add a url property to it as imageURL property
                 for url in data {
                     let photo = Photo(context: self.dataController.viewContext)
                     photo.imageURL = url
                     self.currentPin.addToPhotos(photo)
                     self.photosForPin.append(photo)
                 }
-                try? self.dataController.viewContext.save()
                 DispatchQueue.main.async {
+                    try? self.dataController.viewContext.save()
                     self.imageCollectionView.reloadData()
+                    self.newCollectionButton.isEnabled = true
                 }
             }
             
@@ -100,9 +106,10 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     //load images that have been previously downloaded
     fileprivate func reloadImages() {
-        let photoFetchRequest = createPhotoFetch() as NSFetchRequest<Photo>
-        photosForPin = try! dataController.viewContext.fetch(photoFetchRequest)
         DispatchQueue.main.async {
+            let photoFetchRequest = self.createPhotoFetch() as NSFetchRequest<Photo>
+            self.photosForPin = try! self.dataController.viewContext.fetch(photoFetchRequest) as [Photo]
+            self.photoCount = self.photosForPin.count
             self.imageCollectionView.reloadData()
         }
         
@@ -110,7 +117,6 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     //refreshes images for a specific location by performing the pull again from flickr
     @IBAction func pullNewPhotoCollection(_ sender: Any) {
-        
         for photo in self.photosForPin {
             dataController.viewContext.delete(photo)
         }
@@ -130,6 +136,7 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         } else {
             if let imageUrl = photo.imageURL {
                 DispatchQueue.main.async {
+                    cell.activityIndicator.isHidden = false
                     cell.activityIndicator.startAnimating()
                 }
                 do {
@@ -150,31 +157,20 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
     
     // MARK: CollectionView DataSource
     func collectionView (_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if let count = self.photoCount {
-            if count > 0 {
-                print("this is the count: \(count)")
+            if self.photoCount > 0 {
                 DispatchQueue.main.async {
                     self.noImagesLabel.isHidden = true
                 }
-                return count
+                return self.photoCount
             } else {
-                print("else this is the count: \(count)")
                 DispatchQueue.main.async {
                     self.noImagesLabel.isHidden = false
                 }
-                return count
+                return self.photoCount
             }
-        } else {
-            print("image count empty")
-            DispatchQueue.main.async {
-                self.noImagesLabel.isHidden = true
-            }
-            return 0
-        }
     }
     
     func collectionView (_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        print("Cell = this")
         let celldentifier = "photoCell"
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: celldentifier, for: indexPath) as! CollectionViewCell
         DispatchQueue.main.async {
@@ -192,9 +188,9 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         let photoToDelete = self.photosForPin[indexPath.row]
         self.photosForPin.remove(at: indexPath.row)
         dataController.viewContext.delete(photoToDelete)
-        self.photoCount = self.photoCount - 1
+        self.photoCount -= 1
         DispatchQueue.main.async {
-            self.imageCollectionView.reloadData()
+            self.imageCollectionView.deleteItems(at: [indexPath])
         }
     }
     
@@ -206,74 +202,3 @@ class photoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         return CGSize(width: width, height: height)
     }
 }
-
-//extension photoAlbumViewController {
-//
-//    func controllerWillChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-//        blockOperations.removeAll(keepingCapacity: false)
-//    }
-//
-//    func controllerDidChangeContent(_ controller: NSFetchedResultsController<NSFetchRequestResult>) {
-//        imageCollectionView.performBatchUpdates({
-//            for operation in self.blockOperations {
-//                operation.start()
-//            }
-//        }, completion: {(completed) in
-//
-//        })
-//    }
-//
-//    func controller(_ controller: NSFetchedResultsController<NSFetchRequestResult>, didChange anObject: Any, at indexPath: IndexPath?, for type: NSFetchedResultsChangeType, newIndexPath: IndexPath?) {
-//        switch type {
-//        case .insert:
-//            blockOperations.append(BlockOperation(block: {
-//                self.imageCollectionView.insertItems(at: [newIndexPath!])
-//            }))
-//        case .delete:
-//            blockOperations.append(BlockOperation(block: {
-//                self.imageCollectionView.deleteItems(at: [indexPath!])
-//            }))
-//        default:
-//            break
-//        }
-//    }
-//}
-
-
-//USED
-//func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-//    let celldentifier = "PhotoCell"
-//    let cell = collectionView.dequeueReusableCell(withReuseIdentifier: celldentifier, for: indexPath) as! PhotoCell
-//    cell.imageView.image = nil
-//    cell.activityIndicator.startAnimating()
-//
-//    let photo = fetchedResultsController.object(at: indexPath)
-//    downloadImage(using: cell, photo: photo, collectionView: collectionView, index: indexPath)
-//    return cell
-//}
-//
-
-
-//private func downloadImage(using cell: PhotoCell, photo: Photo, collectionView: UICollectionView, index: IndexPath) {
-//    if let imageData = photo.image {
-//        cell.activityIndicator.stopAnimating()
-//        cell.imageView.image = UIImage(data: Data(referencing: imageData))
-//    } else {
-//        if let imageUrl = photo.imageUrl {
-//            cell.activityIndicator.startAnimating()
-//            FileDownloader.shared.downloadImage(imageUrl: imageUrl) { (data, error) in
-//                if let _ = error {
-//                    cell.activityIndicator.stopAnimating()
-//                    return
-//                } else if let data = data {
-//                    if let currentCell = collectionView.cellForItem(at: index) as? PhotoCell {
-//                        currentCell.imageView.image = UIImage(data: data)
-//                        cell.activityIndicator.stopAnimating()
-//                    }
-//                    photo.image = NSData(data: data)
-//                    DataController.shared.saveContext()
-//                }
-//            }
-//        }
-//    }
-//}
