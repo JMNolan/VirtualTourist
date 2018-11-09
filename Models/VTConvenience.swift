@@ -40,8 +40,7 @@ extension virtualTouristModel {
                     photoURL.append(imageURL)
                     photoId.append(photo.id!)
                 }
-                completionHandler(true, nil, photoURL, Int((parsedResults.photos?.total)!)!, (parsedResults.photos?.pages)!, (parsedResults.photos?.page)!)
-                print("This many properties are being passed: \(Int((parsedResults.photos?.total)!)!)")
+                completionHandler(true, nil, photoURL, Int((parsedResults.photos?.photo?.count)!), (parsedResults.photos?.pages)!, (parsedResults.photos?.page)!)
                 return
             } catch {
                 completionHandler(false, "Data parse failed:\(error)", [], 0, 0, 0)

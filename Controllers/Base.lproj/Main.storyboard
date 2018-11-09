@@ -141,19 +141,22 @@
                                     <constraint firstAttribute="height" constant="165" id="13X-Er-BZK"/>
                                 </constraints>
                             </mapView>
-                            <textField opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="No Images" borderStyle="roundedRect" textAlignment="center" adjustsFontForContentSizeCategory="YES" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="F5s-iq-xTJ">
-                                <rect key="frame" x="77" y="378" width="220" height="43"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <nil key="textColor"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="No Images" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="fru-jh-CZi">
+                                <rect key="frame" x="113" y="374.5" width="148" height="39"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="39" id="Vct-o4-99g"/>
+                                </constraints>
                                 <fontDescription key="fontDescription" type="system" pointSize="32"/>
-                                <textInputTraits key="textInputTraits"/>
-                            </textField>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
                             <constraint firstItem="ZBC-mw-XRE" firstAttribute="top" secondItem="7Iu-8i-40J" secondAttribute="top" constant="-20" id="3qG-pp-wjd"/>
                             <constraint firstItem="ZBC-mw-XRE" firstAttribute="leading" secondItem="7Iu-8i-40J" secondAttribute="leading" id="Bhq-Ig-d5L"/>
                             <constraint firstItem="oXl-b0-c3s" firstAttribute="leading" secondItem="7Iu-8i-40J" secondAttribute="leading" id="Gvh-Xu-Djp"/>
+                            <constraint firstItem="fru-jh-CZi" firstAttribute="centerY" secondItem="JvP-GY-XcE" secondAttribute="centerY" id="IUL-E2-hx4"/>
                             <constraint firstItem="JvP-GY-XcE" firstAttribute="top" secondItem="ZBC-mw-XRE" secondAttribute="bottom" id="Qw1-OS-zfM"/>
                             <constraint firstItem="oXl-b0-c3s" firstAttribute="top" secondItem="JvP-GY-XcE" secondAttribute="bottom" id="buH-bL-Fd5"/>
                             <constraint firstAttribute="trailing" secondItem="JvP-GY-XcE" secondAttribute="trailing" id="ee2-7u-lq4"/>
@@ -162,6 +165,7 @@
                             <constraint firstItem="oXl-b0-c3s" firstAttribute="bottom" secondItem="7Iu-8i-40J" secondAttribute="bottom" id="jI7-na-FKH"/>
                             <constraint firstItem="ZBC-mw-XRE" firstAttribute="trailing" secondItem="7Iu-8i-40J" secondAttribute="trailing" id="kMP-ej-19k"/>
                             <constraint firstItem="oXl-b0-c3s" firstAttribute="trailing" secondItem="7Iu-8i-40J" secondAttribute="trailing" id="q41-ce-tte"/>
+                            <constraint firstItem="fru-jh-CZi" firstAttribute="centerX" secondItem="JvP-GY-XcE" secondAttribute="centerX" id="wzg-OR-QdY"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="7Iu-8i-40J"/>
                     </view>
@@ -170,7 +174,7 @@
                         <outlet property="imageCollectionView" destination="JvP-GY-XcE" id="yxU-dl-ekL"/>
                         <outlet property="mapView" destination="ZBC-mw-XRE" id="Ys8-Q7-Ikh"/>
                         <outlet property="newCollectionButton" destination="b8S-QQ-DT8" id="he0-xa-vZB"/>
-                        <outlet property="noImagesLabel" destination="F5s-iq-xTJ" id="5g4-cq-lym"/>
+                        <outlet property="noImagesLabel" destination="fru-jh-CZi" id="eZd-qy-cE9"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="PrU-4G-m7b" userLabel="First Responder" sceneMemberID="firstResponder"/>
